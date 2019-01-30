@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
   bool regional_jec = true;
   bool ggh_wg1 = true;
   bool auto_rebin = false;
+  bool blind_unrolled = false;
   bool real_data = false;
   bool jetfakes = true;
   bool embedding = false;
@@ -68,6 +69,7 @@ int main(int argc, char **argv) {
       ("postfix", po::value<string>(&postfix)->default_value(postfix))
       ("channel", po::value<string>(&chan)->default_value(chan))
       ("auto_rebin", po::value<bool>(&auto_rebin)->default_value(auto_rebin))
+      ("blind_unrolled", po::value<bool>(&blind_unrolled)->default_value(blind_unrolled))
       ("regional_jec", po::value<bool>(&regional_jec)->default_value(regional_jec))
       ("ggh_wg1", po::value<bool>(&ggh_wg1)->default_value(ggh_wg1))
       ("real_data", po::value<bool>(&real_data)->default_value(real_data))
@@ -366,6 +368,92 @@ int main(int argc, char **argv) {
                            cb.cp().bin({b}).signals().GetShape(),
                        true);
       });
+    }
+  }
+
+
+  // Blind signal categories
+  if(blind_unrolled){
+    // 0Jet: 1
+    // 1Jet: 2-5
+    // 2Jet: 6-9
+    std::vector<int> blind_ggh = {1,2,3,4,5};
+
+    //VBFTOPO_JET3VETO: 1
+    //VBFTOPO_JET3:     2
+    //REST:             3
+    //PTJET1_GT200:     4
+    //VH2JET:           5
+    std::vector<int> blind_qqh = {1,2,3,4,5};
+
+    std::cout << "[INFO] Blind bins in ggh categor: ";
+    for(auto b : blind_ggh) std::cout << b<< " ";
+    std::cout << std::endl;
+    for (auto b : cb.cp().bin_set())
+    {
+      TString bstr = b;
+      if ( bstr.Contains("ggh_unrolled") )
+      {
+        int categories = 9;
+        auto bkg  = cb.cp().bin({b}).backgrounds().GetShape();
+        auto sig  = cb.cp().bin({b}).signals().GetShape();
+        auto data = cb.cp().bin({b}).data().GetShape();
+
+        int total_bins = data.GetNbinsX();
+
+        for( auto bin : blind_ggh)
+        {
+          auto low_edge = (bin -1) * ( total_bins / categories);
+          auto high_edge = bin* ( total_bins / categories);
+          for( int i=0; i <= total_bins; ++i  )
+          {
+            if(low_edge < i && i <= high_edge )
+            {
+              bkg.SetBinContent(i,0.0);
+              bkg.SetBinError(i,0.0);
+              sig.SetBinContent(i,0.0);
+              sig.SetBinError(i,0.0);  
+              data.SetBinContent(i,0.0);
+              data.SetBinError(i,0.0);
+            }
+          }
+        }
+      }
+    }
+
+    std::cout << "[INFO] Blind bins in qqh categor: ";
+    for(auto b : blind_qqh) std::cout << b<< " ";
+    std::cout << std::endl;
+    for (auto b : cb.cp().bin_set())
+    {
+      TString bstr = b;
+      if ( bstr.Contains("qqh_unrolled") )
+      {
+        int categories = 5;
+        auto bkg  = cb.cp().bin({b}).backgrounds().GetShape();
+        auto sig  = cb.cp().bin({b}).signals().GetShape();
+        auto data = cb.cp().bin({b}).data().GetShape();
+
+        int total_bins = data.GetNbinsX();
+
+        for( auto bin : blind_qqh)
+        {
+          auto low_edge = (bin -1) * ( total_bins / categories);
+          auto high_edge = bin* ( total_bins / categories);
+          for( int i=0; i <= total_bins; ++i  )
+          {
+            if(low_edge < i && i <= high_edge )
+            {
+              bkg.SetBinContent(i,0.0);
+              bkg.SetBinError(i,0.0);
+              sig.SetBinContent(i,0.0);
+              sig.SetBinError(i,0.0);  
+              data.SetBinContent(i,0.0);
+              data.SetBinError(i,0.0);
+            }
+          }
+        }
+      }
     }
   }
 
